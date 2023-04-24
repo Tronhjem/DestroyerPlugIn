@@ -7,7 +7,6 @@
 
 #include "SineWaveVisualizer.hpp"
 #include "PluginEditor.h"
-
 void SineWaveVisual::paint(juce::Graphics &g)
 {
     FillVisual();
@@ -42,7 +41,7 @@ void SineWaveVisual::FillSine()
     double delta = 1.0 / (double)(points.size());
     for (int i = 0; i < points.size() - 1; ++i)
     {
-        sine[i] = -1.f * sin(2.0 * M_PI * t);
+        sine[i] = -1.f * sin(2.0 * 3.1415926536 * t);
         t += delta;
     }
     sine[points.size() - 1] = 0.0;
