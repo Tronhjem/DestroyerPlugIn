@@ -121,7 +121,7 @@ public:
         {
             // get the size and calculate how far the point is between the two.
             float size = endPoint->position.x - startPoint->position.x;
-            float t = (x - startPoint->position.x) /  size;
+            float t = (x - startPoint->position.x) / size;
             value = lerp(startPoint->position.y, endPoint->position.y, t);
         }
         

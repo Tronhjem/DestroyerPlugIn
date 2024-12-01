@@ -29,7 +29,7 @@ public:
        setColour (juce::Slider::rotarySliderFillColourId, TURQOISE);
        setColour (juce::Slider::rotarySliderOutlineColourId, TURQOISE);
        
-        setColour (juce::Slider::trackColourId, PINK);
+       setColour (juce::Slider::trackColourId, PINK);
        setColour (juce::Slider::backgroundColourId, LIGHT_PURPLE);
         
        // Text
@@ -79,7 +79,6 @@ private:
     // access the processor object that created it.
     DestroyerAudioProcessor& audioProcessor;
     SineWaveVisual sine{144, 330, 512, 200, envelope};
-    
     
     juce::Slider Freq
     {

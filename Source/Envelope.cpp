@@ -15,13 +15,13 @@ void Envelope::paint(juce::Graphics &g)
     g.drawLine(EnvelopeMargin, BoundsEndPosY / 2, BoundsEndPosX - EnvelopeMargin, BoundsEndPosY / 2);
     g.drawLine(BoundsEndPosX / 2, EnvelopeMargin, BoundsEndPosX / 2, BoundsEndPosY - EnvelopeMargin);
     
-    g.drawText("-1", 25,                        0, 20, 10, juce::Justification::centredTop);
-    g.drawText("0", (BoundsEndPosX / 2) - 10,  0, 20, 10, juce::Justification::centredTop);
-    g.drawText("1", BoundsEndPosX - 50,        0, 20, 10, juce::Justification::centredTop);
+    g.drawText("-1", 25,                         0, 20, 10, juce::Justification::centredTop);
+    g.drawText("0" , (BoundsEndPosX / 2) - 10,   0, 20, 10, juce::Justification::centredTop);
+    g.drawText("1" , BoundsEndPosX - 50,         0, 20, 10, juce::Justification::centredTop);
     
-    g.drawText("-1", 0, 20,                        20, 10, juce::Justification::centredTop);
-    g.drawText("0",  0, (BoundsEndPosY / 2) - 8, 20, 10, juce::Justification::centredTop);
-    g.drawText("1",  0, BoundsEndPosY - 50      , 20, 10, juce::Justification::centredTop);
+    g.drawText("-1", 0, 20,                         20, 10, juce::Justification::centredTop);
+    g.drawText("0" ,  0, (BoundsEndPosY / 2) - 8,   20, 10, juce::Justification::centredTop);
+    g.drawText("1" ,  0, BoundsEndPosY - 50,        20, 10, juce::Justification::centredTop);
     
     if (curve == nullptr)
         return;
@@ -55,7 +55,6 @@ void Envelope::paint(juce::Graphics &g)
         g.fillEllipse(pos.x + EnvelopeMargin - POINT_HALF_SIZE,
                       pos.y + EnvelopeMargin - POINT_HALF_SIZE,
                       POINT_SIZE, POINT_SIZE);
-        
     }
 
     g.setColour(TURQOISE);
