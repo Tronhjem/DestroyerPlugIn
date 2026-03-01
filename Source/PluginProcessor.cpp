@@ -135,14 +135,17 @@ void DestroyerAudioProcessor::changeProgramName (int index, const juce::String& 
 //==============================================================================
 void DestroyerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    mOverSampler.initProcessing(samplesPerBlock);
+    
     for (auto& filter : mMoogFilters)
-        filter.setSampleRate(sampleRate);
+        filter.SetSampleRate(sampleRate * OversampleFactor);
 }
 
 void DestroyerAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    mOverSampler.reset();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -176,10 +179,9 @@ void DestroyerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     juce::ScopedNoDenormals noDenormals;
     const auto totalNumInputChannels = getTotalNumInputChannels();
 
-    if (totalNumInputChannels > 2)
+    if (totalNumInputChannels > MaxChannels)
         return;
 
-    // Sync curve points from parameters (supports DAW automation)
     mCurve.mPoints[0].mPosition.y = *mPt0y;
     mCurve.mPoints[1].mPosition.x = *mPt1x;
     mCurve.mPoints[1].mPosition.y = *mPt1y;
@@ -189,24 +191,29 @@ void DestroyerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     mCurve.mPoints[3].mPosition.y = *mPt3y;
     mCurve.mPoints[4].mPosition.y = *mPt4y;
 
-    const double freq    = static_cast<double>(*mFreqParam);
-    const double res     = static_cast<double>(*mResParam);
-    const float inGain   = std::pow(10.f, *mInGainParam  / 20.f);
-    const float outGain  = std::pow(10.f, *mOutGainParam / 20.f);
+    const double freq = static_cast<double>(*mFreqParam);
+    const double res = static_cast<double>(*mResParam);
+    const float inGain = std::pow(10.f, *mInGainParam  / 20.f);
+    const float outGain = std::pow(10.f, *mOutGainParam / 20.f);
 
-    const int numSamples = buffer.getNumSamples();
+    juce::dsp::AudioBlock<float> audioBlock = juce::dsp::AudioBlock<float>(buffer);
+    auto upSampledBlock = mOverSampler.processSamplesUp(audioBlock);
+    const int numSamples = static_cast<int>(upSampledBlock.getNumSamples());
     
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        auto* channelData = buffer.getWritePointer (channel);
+        float* channelData = upSampledBlock.getChannelPointer(channel);
         
         for (int i = 0; i < numSamples; ++i)
         {
             float sample = channelData[i] * inGain;
             sample = mCurve.GetYValue(sample);
-            channelData[i] = mMoogFilters[channel].Process((double)sample, freq, res) * outGain;
+            sample = mMoogFilters[channel].Process(static_cast<double>(sample), freq, res);
+            channelData[i] = sample * outGain;
         }
     }
+    
+    mOverSampler.processSamplesDown(audioBlock);
 }
 
 //==============================================================================

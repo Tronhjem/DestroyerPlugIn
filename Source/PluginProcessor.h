@@ -16,6 +16,9 @@
 //==============================================================================
 /**
 */
+constexpr int MaxChannels = 2;
+constexpr size_t OversampleFactor = 2;
+
 class DestroyerAudioProcessorEditor;
 
 class DestroyerAudioProcessor  : public juce::AudioProcessor
@@ -67,21 +70,27 @@ public:
     TranslationCurve mCurve {};
     
 private:
+    std::array<MoogFilter, MaxChannels> mMoogFilters {MoogFilter{}, MoogFilter{}};
     DestroyerAudioProcessorEditor* mEditor = nullptr;
-    std::array<MoogFilter, 2> mMoogFilters {MoogFilter{}, MoogFilter{}};
 
     std::atomic<float>* mFreqParam = nullptr;
-    std::atomic<float>* mResParam  = nullptr;
-    std::atomic<float>* mPt0y      = nullptr;
-    std::atomic<float>* mPt1x      = nullptr;
-    std::atomic<float>* mPt1y      = nullptr;
-    std::atomic<float>* mPt2x      = nullptr;
-    std::atomic<float>* mPt2y      = nullptr;
-    std::atomic<float>* mPt3x      = nullptr;
-    std::atomic<float>* mPt3y      = nullptr;
-    std::atomic<float>* mPt4y         = nullptr;
-    std::atomic<float>* mInGainParam  = nullptr;
+    std::atomic<float>* mResParam = nullptr;
+    std::atomic<float>* mPt0y = nullptr;
+    std::atomic<float>* mPt1x = nullptr;
+    std::atomic<float>* mPt1y = nullptr;
+    std::atomic<float>* mPt2x = nullptr;
+    std::atomic<float>* mPt2y = nullptr;
+    std::atomic<float>* mPt3x = nullptr;
+    std::atomic<float>* mPt3y = nullptr;
+    std::atomic<float>* mPt4y = nullptr;
+    std::atomic<float>* mInGainParam = nullptr;
     std::atomic<float>* mOutGainParam = nullptr;
+    
+    juce::dsp::Oversampling<float> mOverSampler {
+        MaxChannels,
+        OversampleFactor,
+        juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR
+    };
    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DestroyerAudioProcessor)

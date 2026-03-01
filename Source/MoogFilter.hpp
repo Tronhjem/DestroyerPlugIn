@@ -8,11 +8,15 @@
 #ifndef MoogFilter_hpp
 #define MoogFilter_hpp
 
-
 #include <cmath>
 
 class MoogFilter
 {
+public:
+    MoogFilter() {};
+    void SetSampleRate(double sr) noexcept { mSampleRate = 1.0 / sr; }
+    double Process(double in, double freq, double res);
+    
 private:
     double mOldX  = 0.0;
     double mOldY1 = 0.0;
@@ -24,12 +28,7 @@ private:
     double mY3 = 0.0;
     double mY4 = 0.0;
     
-    double mSampleRate = 1.0 / 44100.0;
+    double mSampleRate;
     static constexpr double BANDLIMIT = 1.0 / 6.0;
-
-public:
-    MoogFilter() {};
-    void setSampleRate(double sr) noexcept { mSampleRate = 1.0 / sr; }
-    double Process(double in, double freq, double res);
 };
 #endif /* MoogFilter_hpp */
