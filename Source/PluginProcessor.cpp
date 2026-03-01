@@ -95,12 +95,16 @@ void DestroyerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    mOverSampler.initProcessing(samplesPerBlock);
+    Filters[0].SetSampleRate(sampleRate * 4);
+    Filters[1].SetSampleRate(sampleRate * 4);
 }
 
 void DestroyerAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    mOverSampler.reset();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -137,22 +141,24 @@ void DestroyerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     if (getTotalNumInputChannels() > 2)
         return;
     
-    int numSamples = buffer.getNumSamples();
     
-    if (editor != nullptr)
+    juce::dsp::AudioBlock<float> audioBlock = juce::dsp::AudioBlock<float>(buffer);
+    auto upSampledBlock = mOverSampler.processSamplesUp(audioBlock);
+    const int numSamples = static_cast<int>(upSampledBlock.getNumSamples());
+    
+    for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
+//        auto* channelData = buffer.getWritePointer (channel);
+        float* channelData = upSampledBlock.getChannelPointer(channel);
+        
+        for (int i = 0; i < numSamples; ++i)
         {
-            auto* channelData = buffer.getWritePointer (channel);
-            
-            for (int i = 0; i < numSamples; ++i)
-            {
-                float sample = channelData[i];
-                sample = curve.GetYValue(sample);
-                channelData[i] = Filters[channel].Process((double)sample, Freq, Res);
-            }
+            channelData[i] = curve.GetYValue(channelData[i]);
+//            channelData[i] = Filters[channel].Process((double)sample, Freq, Res);
         }
     }
+    
+    mOverSampler.processSamplesDown(audioBlock);
 }
 
 //==============================================================================

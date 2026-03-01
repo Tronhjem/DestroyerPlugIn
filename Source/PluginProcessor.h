@@ -69,6 +69,12 @@ public:
 private:
     DestroyerAudioProcessorEditor* editor;
     std::array<MoogFilter, 2> Filters {MoogFilter{}, MoogFilter{}};
+    
+    juce::dsp::Oversampling<float> mOverSampler {
+        2,
+        2,
+        juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR
+    };
    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DestroyerAudioProcessor)

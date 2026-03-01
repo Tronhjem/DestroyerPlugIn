@@ -24,12 +24,14 @@ private:
     double y3       = 0.0;
     double y4       = 0.0;
     
-    static constexpr double SAMPLERATE = 1.0 / 44100.0;
+    double mSampleRate;
     static constexpr double BANDLIMIT = 1.0 / 6.0;
     static constexpr double e = 2.71828182845904523536028747135266249;
 
 public:
-    MoogFilter() {};
+    MoogFilter(double sampleRate) : mSampleRate(sampleRate) {};
+    MoogFilter() : mSampleRate(44100.0) {};
     double Process(double in, double freq, double res);
+    void SetSampleRate(const double sampleRate) { mSampleRate = sampleRate; }
 };
 #endif /* MoogFilter_hpp */

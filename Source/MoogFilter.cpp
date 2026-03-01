@@ -13,17 +13,12 @@ double MoogFilter::Process(double in, double freq, double res)
     if (res < 0.f)
         res = 0.f;
 
-    double f = 2.0 * freq * SAMPLERATE;
-
-    //k = 3.6*f - 1.6*f*f -1; //(Empirical tunning)
-    
-    double k = 3.6 * f - 1.6 * f * f - 1.0; //(Empirical tunning)
-
-    double p = (k + 1.0) * 0.5;
-    double scale = pow(MoogFilter::e, (1.0 - p) * 1.386249);
-    double r = res * scale;
-
-    double x = in - r * y4;
+    const double f = 2.0 * freq * mSampleRate;
+    const double k = 3.6 * f - 1.6 * f * f - 1.0; //(Empirical tunning)
+    const double p = (k + 1.0) * 0.5;
+    const double scale = pow(MoogFilter::e, (1.0 - p) * 1.386249);
+    const double r = res * scale;
+    const double x = in - r * y4;
 
     //Four cascaded onepole filters (bilinear transform)
     y1 = x * p + oldx * p - k * y1;
