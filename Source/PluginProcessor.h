@@ -28,6 +28,8 @@ public:
     DestroyerAudioProcessor();
     ~DestroyerAudioProcessor() override;
 
+    static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -61,14 +63,25 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    TranslationCurve curve {};
-    
-    double Freq = 19000.0;
-    double Res = 0.3;
+    juce::AudioProcessorValueTreeState mValueTree;
+    TranslationCurve mCurve {};
     
 private:
-    DestroyerAudioProcessorEditor* editor;
-    std::array<MoogFilter, 2> Filters {MoogFilter{}, MoogFilter{}};
+    DestroyerAudioProcessorEditor* mEditor = nullptr;
+    std::array<MoogFilter, 2> mMoogFilters {MoogFilter{}, MoogFilter{}};
+
+    std::atomic<float>* mFreqParam = nullptr;
+    std::atomic<float>* mResParam  = nullptr;
+    std::atomic<float>* mPt0y      = nullptr;
+    std::atomic<float>* mPt1x      = nullptr;
+    std::atomic<float>* mPt1y      = nullptr;
+    std::atomic<float>* mPt2x      = nullptr;
+    std::atomic<float>* mPt2y      = nullptr;
+    std::atomic<float>* mPt3x      = nullptr;
+    std::atomic<float>* mPt3y      = nullptr;
+    std::atomic<float>* mPt4y         = nullptr;
+    std::atomic<float>* mInGainParam  = nullptr;
+    std::atomic<float>* mOutGainParam = nullptr;
    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DestroyerAudioProcessor)

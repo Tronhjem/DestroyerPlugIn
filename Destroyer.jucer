@@ -2,7 +2,8 @@
 
 <JUCERPROJECT id="b7DRbb" name="Destroyer" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
-              pluginFormats="buildVST,buildVST3">
+              pluginFormats="buildAU,buildVST3" companyName="SonoTron" pluginAAXCategory="64"
+              pluginVST3Category="Distortion">
   <MAINGROUP id="bb0lM2" name="Destroyer">
     <GROUP id="{A8EFA160-C002-ED55-A134-FA5E3DDA0351}" name="Source">
       <FILE id="FBv1eX" name="MoogFilter.cpp" compile="1" resource="0" file="Source/MoogFilter.cpp"/>

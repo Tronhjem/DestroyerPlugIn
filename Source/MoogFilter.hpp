@@ -14,22 +14,22 @@
 class MoogFilter
 {
 private:
-    double oldx     = 0.0;
-    double oldy1    = 0.0;
-    double oldy2    = 0.0;
-    double oldy3    = 0.0;
+    double mOldX  = 0.0;
+    double mOldY1 = 0.0;
+    double mOldY2 = 0.0;
+    double mOldY3 = 0.0;
 
-    double y1       = 0.0;
-    double y2       = 0.0;
-    double y3       = 0.0;
-    double y4       = 0.0;
+    double mY1 = 0.0;
+    double mY2 = 0.0;
+    double mY3 = 0.0;
+    double mY4 = 0.0;
     
-    static constexpr double SAMPLERATE = 1.0 / 44100.0;
+    double mSampleRate = 1.0 / 44100.0;
     static constexpr double BANDLIMIT = 1.0 / 6.0;
-    static constexpr double e = 2.71828182845904523536028747135266249;
 
 public:
     MoogFilter() {};
+    void setSampleRate(double sr) noexcept { mSampleRate = 1.0 / sr; }
     double Process(double in, double freq, double res);
 };
 #endif /* MoogFilter_hpp */

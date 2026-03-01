@@ -12,48 +12,48 @@
 void Envelope::paint(juce::Graphics &g)
 {
     g.setColour(LIGHT_PURPLE);
-    g.drawLine(EnvelopeMargin, BoundsEndPosY / 2, BoundsEndPosX - EnvelopeMargin, BoundsEndPosY / 2);
-    g.drawLine(BoundsEndPosX / 2, EnvelopeMargin, BoundsEndPosX / 2, BoundsEndPosY - EnvelopeMargin);
+    g.drawLine(mEnvelopeMargin, mBoundsEndPosY / 2, mBoundsEndPosX - mEnvelopeMargin, mBoundsEndPosY / 2);
+    g.drawLine(mBoundsEndPosX / 2, mEnvelopeMargin, mBoundsEndPosX / 2, mBoundsEndPosY - mEnvelopeMargin);
     
-    g.drawText("-1", 25,                         0, 20, 10, juce::Justification::centredTop);
-    g.drawText("0" , (BoundsEndPosX / 2) - 10,   0, 20, 10, juce::Justification::centredTop);
-    g.drawText("1" , BoundsEndPosX - 50,         0, 20, 10, juce::Justification::centredTop);
+    g.drawText("-1", 25,                              0, 20, 10, juce::Justification::centredTop);
+    g.drawText("0" , (mBoundsEndPosX / 2) - 10,      0, 20, 10, juce::Justification::centredTop);
+    g.drawText("1" , mBoundsEndPosX - 50,             0, 20, 10, juce::Justification::centredTop);
     
-    g.drawText("-1", 0, 20,                         20, 10, juce::Justification::centredTop);
-    g.drawText("0" ,  0, (BoundsEndPosY / 2) - 8,   20, 10, juce::Justification::centredTop);
-    g.drawText("1" ,  0, BoundsEndPosY - 50,        20, 10, juce::Justification::centredTop);
+    g.drawText("-1", 0, 20,                              20, 10, juce::Justification::centredTop);
+    g.drawText("0" ,  0, (mBoundsEndPosY / 2) - 8,      20, 10, juce::Justification::centredTop);
+    g.drawText("1" ,  0, mBoundsEndPosY - 50,           20, 10, juce::Justification::centredTop);
     
-    if (curve == nullptr)
+    if (mCurve == nullptr)
         return;
     
     // ====== DEBUG DRAW =======
-//    g.drawRect(0, 0, BoundsEndPosX, BoundsEndPosY);
-//    g.drawRect(EnvelopeStartX, EnvelopeStartY, EnvelopeEndX - EnvelopeMargin, EnvelopeEndY - EnvelopeMargin);
+//    g.drawRect(0, 0, mBoundsEndPosX, mBoundsEndPosY);
+//    g.drawRect(mEnvelopeStartX, mEnvelopeStartY, mEnvelopeEndX - mEnvelopeMargin, mEnvelopeEndY - mEnvelopeMargin);
     // ====== DEBUG END ========
     
     juce::Path p;
-    Vector2 pos = curve->points[0].GetDrawPosition(EnvelopeSizeX, EnvelopeSizeY);
+    Vector2 pos = mCurve->mPoints[0].GetDrawPosition(mEnvelopeSizeX, mEnvelopeSizeY);
     
-    p.startNewSubPath((int)pos.x + EnvelopeMargin, (int)pos.y + EnvelopeMargin);
+    p.startNewSubPath((int)pos.x + mEnvelopeMargin, (int)pos.y + mEnvelopeMargin);
 
-    for (int i = 0; i < curve->points.size(); ++i)
+    for (int i = 0; i < (int)mCurve->mPoints.size(); ++i)
     {
-        Vector2 pos = curve->points[i].GetDrawPosition(EnvelopeSizeX, EnvelopeSizeY);
+        Vector2 pos = mCurve->mPoints[i].GetDrawPosition(mEnvelopeSizeX, mEnvelopeSizeY);
         
-        juce::String x = juce::String(curve->points[i].position.x, 3);
-        juce::String y = juce::String(curve->points[i].position.y, 3);
+        juce::String x = juce::String(mCurve->mPoints[i].mPosition.x, 3);
+        juce::String y = juce::String(mCurve->mPoints[i].mPosition.y, 3);
         
         if (i > 0)
         {
-            p.lineTo((int)pos.x + EnvelopeMargin, (int)pos.y + EnvelopeMargin);
+            p.lineTo((int)pos.x + mEnvelopeMargin, (int)pos.y + mEnvelopeMargin);
         }
         
         g.setColour(PINK);
-        g.drawText("x: " + x + "  y: " + y, pos.x + EnvelopeMargin + 20, pos.y + EnvelopeMargin - 30, 200, 60, juce::Justification::centredLeft);
+        g.drawText("x: " + x + "  y: " + y, pos.x + mEnvelopeMargin + 20, pos.y + mEnvelopeMargin - 30, 200, 60, juce::Justification::centredLeft);
         
         g.setColour(TURQOISE);
-        g.fillEllipse(pos.x + EnvelopeMargin - POINT_HALF_SIZE,
-                      pos.y + EnvelopeMargin - POINT_HALF_SIZE,
+        g.fillEllipse(pos.x + mEnvelopeMargin - POINT_HALF_SIZE,
+                      pos.y + mEnvelopeMargin - POINT_HALF_SIZE,
                       POINT_SIZE, POINT_SIZE);
     }
 
@@ -63,14 +63,14 @@ void Envelope::paint(juce::Graphics &g)
 
 void Envelope::mouseDown (const juce::MouseEvent& event)
 {
-    for (int i = 0; i < curve->points.size(); ++i)
+    for (int i = 0; i < (int)mCurve->mPoints.size(); ++i)
     {
-        Vector2 pos = curve->points[i].GetDrawPosition(EnvelopeSizeX, EnvelopeSizeY);
-        if (abs(event.x - EnvelopeMargin - pos.x) <= POINT_SIZE &&
-            abs(event.y - EnvelopeMargin - pos.y) <= POINT_SIZE)
+        Vector2 pos = mCurve->mPoints[i].GetDrawPosition(mEnvelopeSizeX, mEnvelopeSizeY);
+        if (abs(event.x - mEnvelopeMargin - pos.x) <= POINT_SIZE &&
+            abs(event.y - mEnvelopeMargin - pos.y) <= POINT_SIZE)
         {
-            editing = &curve->points[i];
-            // opt out since we found the point.
+            mEditing = &mCurve->mPoints[i];
+            mEditingIdx = i;
             break;
         }
     }
@@ -78,38 +78,65 @@ void Envelope::mouseDown (const juce::MouseEvent& event)
 
 void Envelope::mouseDoubleClick(const juce::MouseEvent& event)
 {
-    for (int i = 0; i < curve->points.size(); ++i)
+    for (int i = 0; i < (int)mCurve->mPoints.size(); ++i)
     {
-        Vector2 pos = curve->points[i].GetDrawPosition(EnvelopeSizeX, EnvelopeSizeY);
-        if (abs(event.x - EnvelopeMargin - pos.x) <= POINT_SIZE &&
-            abs(event.y - EnvelopeMargin - pos.y) <= POINT_SIZE)
+        Vector2 pos = mCurve->mPoints[i].GetDrawPosition(mEnvelopeSizeX, mEnvelopeSizeY);
+        if (abs(event.x - mEnvelopeMargin - pos.x) <= POINT_SIZE &&
+            abs(event.y - mEnvelopeMargin - pos.y) <= POINT_SIZE)
         {
-            curve->points[i].Reset();
+            mCurve->mPoints[i].Reset();
+            notifyApvts(i);
             break;
         }
     }
     
+    mCurve->mDirty = true;
     repaint();
-    if (sine != nullptr)
-        sine->repaint();
+    if (mSine != nullptr)
+        mSine->repaint();
 }
 
 void Envelope::mouseDrag (const juce::MouseEvent& event)
 {
-    if(editing != nullptr)
+    if(mEditing != nullptr)
     {
-        int x = std::clamp(event.x - EnvelopeMargin, 0, EnvelopeSizeX);
-        int y = std::clamp(event.y - EnvelopeMargin, 0, EnvelopeSizeY);
+        int x = std::clamp(event.x - mEnvelopeMargin, 0, mEnvelopeSizeX);
+        int y = std::clamp(event.y - mEnvelopeMargin, 0, mEnvelopeSizeY);
         
-        editing->SetPositionFromMouse(x, y, EnvelopeSizeX, EnvelopeSizeY);
+        mEditing->SetPositionFromMouse(x, y, mEnvelopeSizeX, mEnvelopeSizeY);
+        notifyApvts(mEditingIdx);
         
+        mCurve->mDirty = true;
         repaint();
-        if (sine != nullptr)
-            sine->repaint();
+        if (mSine != nullptr)
+            mSine->repaint();
     }
 }
 
 void Envelope::mouseUp (const juce::MouseEvent& event)
 {
-    editing = nullptr;
+    mEditing = nullptr;
+    mEditingIdx = -1;
+}
+
+void Envelope::notifyApvts (int idx)
+{
+    if (mApvts == nullptr || mCurve == nullptr || idx < 0)
+        return;
+
+    auto set = [&](const juce::String& id, float val)
+    {
+        if (auto* param = mApvts->getParameter(id))
+            param->setValueNotifyingHost(param->convertTo0to1(val));
+    };
+
+    switch (idx)
+    {
+        case 0: set("pt0y", mCurve->mPoints[0].mPosition.y); break;
+        case 1: set("pt1x", mCurve->mPoints[1].mPosition.x); set("pt1y", mCurve->mPoints[1].mPosition.y); break;
+        case 2: set("pt2x", mCurve->mPoints[2].mPosition.x); set("pt2y", mCurve->mPoints[2].mPosition.y); break;
+        case 3: set("pt3x", mCurve->mPoints[3].mPosition.x); set("pt3y", mCurve->mPoints[3].mPosition.y); break;
+        case 4: set("pt4y", mCurve->mPoints[4].mPosition.y); break;
+        default: break;
+    }
 }

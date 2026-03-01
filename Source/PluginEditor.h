@@ -20,10 +20,10 @@ constexpr int WIDTH = 900;
 #define PINK juce::Colour(235u, 104u, 160u)
 #define TURQOISE juce::Colour(168u, 218u, 205u)
 
-class DestroyerLookAndFeelFREQ : public juce::LookAndFeel_V4
+class DestroyerLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
-    DestroyerLookAndFeelFREQ()
+    DestroyerLookAndFeel()
    {
        setColour (juce::Slider::thumbColourId, TURQOISE);
        setColour (juce::Slider::rotarySliderFillColourId, TURQOISE);
@@ -39,29 +39,10 @@ public:
    }
 };
 
-class DestroyerLookAndFeelRES : public juce::LookAndFeel_V4
-{
-public:
-    DestroyerLookAndFeelRES()
-   {
-        setColour (juce::Slider::thumbColourId, TURQOISE);
-        setColour (juce::Slider::rotarySliderFillColourId, TURQOISE);
-        setColour (juce::Slider::rotarySliderOutlineColourId, TURQOISE);
-        
-        setColour (juce::Slider::trackColourId, PINK);
-        setColour (juce::Slider::backgroundColourId, LIGHT_PURPLE);
-         
-        // Text
-        setColour (juce::Slider::textBoxOutlineColourId, TURQOISE);
-        setColour (juce::Slider::textBoxTextColourId, TURQOISE);
-        setColour (juce::Slider:: textBoxBackgroundColourId, LIGHT_PURPLE);
-   }
-};
-
 //==============================================================================
 /**
 */
-class DestroyerAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Slider::Listener
+class DestroyerAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
     DestroyerAudioProcessorEditor (DestroyerAudioProcessor&);
@@ -71,29 +52,44 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    Envelope envelope {100, 50, 600, 300, &sine};
+    Envelope mEnvelope {100, 50, 600, 300, &mSine};
 private:
-    void sliderValueChanged(juce::Slider *slider) override;
+    DestroyerAudioProcessor& mAudioProcessor;
+    SineWaveVisual mSine{144, 330, 512, 200, mEnvelope};
     
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
-    DestroyerAudioProcessor& audioProcessor;
-    SineWaveVisual sine{144, 330, 512, 200, envelope};
-    
-    juce::Slider Freq
+    juce::Slider mFreq
     {
         juce::Slider::SliderStyle::LinearVertical,
         juce::Slider::TextEntryBoxPosition::TextBoxBelow}
     ;
     
-    juce::Slider Res
+    juce::Slider mRes
     {
         juce::Slider::SliderStyle::LinearVertical,
         juce::Slider::TextEntryBoxPosition::TextBoxBelow
-        
     };
-    DestroyerLookAndFeelFREQ sliderLookAndFeelFREQ;
-    DestroyerLookAndFeelRES sliderLookAndFeelRES;
+
+    juce::Slider mInGain
+    {
+        juce::Slider::SliderStyle::LinearVertical,
+        juce::Slider::TextEntryBoxPosition::TextBoxBelow
+    };
+
+    juce::Slider mOutGain
+    {
+        juce::Slider::SliderStyle::LinearVertical,
+        juce::Slider::TextEntryBoxPosition::TextBoxBelow
+    };
+
+    DestroyerLookAndFeel mSliderLookAndFeelFreq;
+    DestroyerLookAndFeel mSliderLookAndFeelRes;
+    DestroyerLookAndFeel mSliderLookAndFeelInGain;
+    DestroyerLookAndFeel mSliderLookAndFeelOutGain;
+
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mFreqAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mResAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mInGainAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mOutGainAttachment;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DestroyerAudioProcessorEditor)
 };

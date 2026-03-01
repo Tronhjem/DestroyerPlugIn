@@ -10,9 +10,6 @@
 #include <vector>
 #include <JuceHeader.h>
 
-static int MousePosX;
-static int MousePosY;
-    
 constexpr int POINT_SIZE = 10;
 constexpr float POINT_HALF_SIZE = (float)POINT_SIZE * 0.5f;
 
@@ -39,45 +36,45 @@ class EnvelopePoint
 {
 public:
     EnvelopePoint(){}
-    EnvelopePoint(Vector2 pos, PointRestrict restriction = PointRestrict::None) : position(pos), originalPosition(pos), restrictionType(restriction)
+    EnvelopePoint(Vector2 pos, PointRestrict restriction = PointRestrict::None) : mPosition(pos), mOriginalPosition(pos), mRestrictionType(restriction)
     {
         
     }
     
-    Vector2 GetDrawPosition(int xMaxSize, int yMaxSize)
+    Vector2 GetDrawPosition(int xMaxSize, int yMaxSize) const
     {
         Vector2 pos;
-        pos.x = (position.x + 1.f) * 0.5f * xMaxSize;
-        pos.y = (position.y + 1.f) * 0.5f * yMaxSize;
+        pos.x = (mPosition.x + 1.f) * 0.5f * xMaxSize;
+        pos.y = (mPosition.y + 1.f) * 0.5f * yMaxSize;
         return pos;
     }
     
     void SetPositionFromMouse(int x, int y, int xMaxSize, int yMaxSize)
     {
-        if (restrictionType == PointRestrict::LockXY)
+        if (mRestrictionType == PointRestrict::LockXY)
             return;
         
-        if (restrictionType != PointRestrict::LockX)
+        if (mRestrictionType != PointRestrict::LockX)
         {
-            position.x = (float) x / (float) xMaxSize;
-            position.x = (position.x * 2.f) - 1.f;
+            mPosition.x = (float) x / (float) xMaxSize;
+            mPosition.x = (mPosition.x * 2.f) - 1.f;
         }
         
-        if (restrictionType != PointRestrict::LockY)
+        if (mRestrictionType != PointRestrict::LockY)
         {
-            position.y = (float) y / (float) yMaxSize;
-            position.y = (position.y * 2.f) - 1.f;
+            mPosition.y = (float) y / (float) yMaxSize;
+            mPosition.y = (mPosition.y * 2.f) - 1.f;
         }
     }
     
     void Reset()
     {
-        position = originalPosition;
+        mPosition = mOriginalPosition;
     }
 
-    Vector2 position;
-    Vector2 originalPosition;
-    PointRestrict restrictionType = PointRestrict::None;
+    Vector2 mPosition;
+    Vector2 mOriginalPosition;
+    PointRestrict mRestrictionType = PointRestrict::None;
 };
 
 class TranslationCurve
@@ -85,16 +82,16 @@ class TranslationCurve
 public:
     TranslationCurve()
     {
-        points.push_back(EnvelopePoint{ Vector2{-1.f, -1.f}, PointRestrict::LockX});
-        points.push_back(EnvelopePoint{ Vector2{-0.5f, -0.5f}                           });
-        points.push_back(EnvelopePoint{ Vector2{0.f, 0.f},   });
-        points.push_back(EnvelopePoint{ Vector2{0.5f, 0.5f}                             });
-        points.push_back(EnvelopePoint{ Vector2{1.f, 1.f},   PointRestrict::LockX});
+        mPoints.push_back(EnvelopePoint{ Vector2{-1.f, -1.f}, PointRestrict::LockX});
+        mPoints.push_back(EnvelopePoint{ Vector2{-0.5f, -0.5f}                    });
+        mPoints.push_back(EnvelopePoint{ Vector2{0.f, 0.f},                       });
+        mPoints.push_back(EnvelopePoint{ Vector2{0.5f, 0.5f}                      });
+        mPoints.push_back(EnvelopePoint{ Vector2{1.f, 1.f},   PointRestrict::LockX});
     }
     
-    std::vector<EnvelopePoint> points;
+    std::vector<EnvelopePoint> mPoints;
     
-    float GetYValue(float x)
+    float GetYValue(float x) const
     {
         if (x > 1.f)
             x = 1.f;
@@ -102,16 +99,16 @@ public:
         if (x < -1.f)
             x = -1.f;
         
-        EnvelopePoint* startPoint = nullptr;
-        EnvelopePoint* endPoint = nullptr;
+        const EnvelopePoint* startPoint = nullptr;
+        const EnvelopePoint* endPoint = nullptr;
         
-        for (int i = 1; i < points.size(); ++i)
+        for (int i = 1; i < (int)mPoints.size(); ++i)
         {
-            if(x >= points[i - 1].position.x &&
-               x <= points[i].position.x)
+            if(x >= mPoints[i - 1].mPosition.x &&
+               x <= mPoints[i].mPosition.x)
             {
-                startPoint = &points[i - 1];
-                endPoint = &points[i];
+                startPoint = &mPoints[i - 1];
+                endPoint = &mPoints[i];
                 break;
             }
         }
@@ -120,18 +117,20 @@ public:
         if (startPoint != nullptr && endPoint != nullptr)
         {
             // get the size and calculate how far the point is between the two.
-            float size = endPoint->position.x - startPoint->position.x;
-            float t = (x - startPoint->position.x) / size;
-            value = lerp(startPoint->position.y, endPoint->position.y, t);
+            float size = endPoint->mPosition.x - startPoint->mPosition.x;
+            float t = (x - startPoint->mPosition.x) / size;
+            value = lerp(startPoint->mPosition.y, endPoint->mPosition.y, t);
         }
         
         return value;
     }
     
-    inline float lerp(float a, float b, float t)
+    static constexpr float lerp(float a, float b, float t) noexcept
     {
         return (1.f - t) * a + t * b;
     }
+    
+    bool mDirty = true;
 };
 
 class Envelope : public juce::Component
@@ -139,27 +138,28 @@ class Envelope : public juce::Component
 public:
     Envelope(int x, int y, int width, int height, SineWaveVisual* s)
     {
-        BoundsX = x;
-        BoundsY = y;
-        BoundsEndPosX = width;
-        BoundsEndPosY = height;
-        BoundsSizeX = width - x;
-        BoundsSizeY = height - y;
+        mBoundsX = x;
+        mBoundsY = y;
+        mBoundsEndPosX = width;
+        mBoundsEndPosY = height;
+        mBoundsSizeX = width - x;
+        mBoundsSizeY = height - y;
         
-        EnvelopeStartX = EnvelopeMargin;
-        EnvelopeStartY = EnvelopeMargin;
-        EnvelopeEndX = width - EnvelopeMargin;
-        EnvelopeEndY = height - EnvelopeMargin;
-        EnvelopeSizeX = EnvelopeEndX - EnvelopeMargin;
-        EnvelopeSizeY = EnvelopeEndY - EnvelopeMargin;
+        mEnvelopeStartX = mEnvelopeMargin;
+        mEnvelopeStartY = mEnvelopeMargin;
+        mEnvelopeEndX = width - mEnvelopeMargin;
+        mEnvelopeEndY = height - mEnvelopeMargin;
+        mEnvelopeSizeX = mEnvelopeEndX - mEnvelopeMargin;
+        mEnvelopeSizeY = mEnvelopeEndY - mEnvelopeMargin;
         
         setBounds(x, y, width, height);
         
-        sine = s;
+        mSine = s;
     }
     
-    TranslationCurve* curve;
-    SineWaveVisual* sine;
+    TranslationCurve* mCurve;
+    SineWaveVisual* mSine;
+    juce::AudioProcessorValueTreeState* mApvts = nullptr;
     
 private:
     void paint(juce::Graphics &g) override;
@@ -168,22 +168,25 @@ private:
     void mouseDrag (const juce::MouseEvent& event) override;
     void mouseUp (const juce::MouseEvent& event) override;
 
-    int BoundsX;
-    int BoundsY;
-    int BoundsEndPosX;
-    int BoundsEndPosY;
-    int BoundsSizeX;
-    int BoundsSizeY;
-    
-    const int EnvelopeMargin = 40;
-    int EnvelopeStartX;
-    int EnvelopeStartY;
-    int EnvelopeEndX;
-    int EnvelopeEndY;
-    int EnvelopeSizeX;
-    int EnvelopeSizeY;
+    void notifyApvts (int pointIdx);
 
-    EnvelopePoint* editing = nullptr;
+    int mBoundsX;
+    int mBoundsY;
+    int mBoundsEndPosX;
+    int mBoundsEndPosY;
+    int mBoundsSizeX;
+    int mBoundsSizeY;
+    
+    const int mEnvelopeMargin = 40;
+    int mEnvelopeStartX;
+    int mEnvelopeStartY;
+    int mEnvelopeEndX;
+    int mEnvelopeEndY;
+    int mEnvelopeSizeX;
+    int mEnvelopeSizeY;
+
+    EnvelopePoint* mEditing = nullptr;
+    int mEditingIdx = -1;
 };
 
 #endif /* Envelope_hpp */

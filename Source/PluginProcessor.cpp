@@ -10,6 +10,35 @@
 #include "PluginEditor.h"
 
 //==============================================================================
+juce::AudioProcessorValueTreeState::ParameterLayout DestroyerAudioProcessor::createParameterLayout()
+{
+    using APF = juce::AudioParameterFloat;
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    layout.add(std::make_unique<APF>("freq", "Frequency",
+        juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.2f), 19000.f));
+
+    layout.add(std::make_unique<APF>("res", "Resonance",
+        juce::NormalisableRange<float>(0.f, 1.f, 0.01f), 0.2f));
+
+    auto curveRange = juce::NormalisableRange<float>(-1.f, 1.f, 0.001f);
+    layout.add(std::make_unique<APF>("pt0y", "Curve Point 0 Y", curveRange, -1.0f));
+    layout.add(std::make_unique<APF>("pt1x", "Curve Point 1 X", curveRange, -0.5f));
+    layout.add(std::make_unique<APF>("pt1y", "Curve Point 1 Y", curveRange, -0.5f));
+    layout.add(std::make_unique<APF>("pt2x", "Curve Point 2 X", curveRange,  0.0f));
+    layout.add(std::make_unique<APF>("pt2y", "Curve Point 2 Y", curveRange,  0.0f));
+    layout.add(std::make_unique<APF>("pt3x", "Curve Point 3 X", curveRange,  0.5f));
+    layout.add(std::make_unique<APF>("pt3y", "Curve Point 3 Y", curveRange,  0.5f));
+    layout.add(std::make_unique<APF>("pt4y", "Curve Point 4 Y", curveRange,  1.0f));
+
+    auto gainRange = juce::NormalisableRange<float>(-20.f, 20.f, 0.1f);
+    layout.add(std::make_unique<APF>("inGain",  "Input Gain",  gainRange, 0.f));
+    layout.add(std::make_unique<APF>("outGain", "Output Gain", gainRange, 0.f));
+
+    return layout;
+}
+
+//==============================================================================
 DestroyerAudioProcessor::DestroyerAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
@@ -19,9 +48,22 @@ DestroyerAudioProcessor::DestroyerAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+       mValueTree(*this, nullptr, "STATE", createParameterLayout())
 #endif
 {
+    mFreqParam = mValueTree.getRawParameterValue("freq");
+    mResParam  = mValueTree.getRawParameterValue("res");
+    mPt0y      = mValueTree.getRawParameterValue("pt0y");
+    mPt1x      = mValueTree.getRawParameterValue("pt1x");
+    mPt1y      = mValueTree.getRawParameterValue("pt1y");
+    mPt2x      = mValueTree.getRawParameterValue("pt2x");
+    mPt2y      = mValueTree.getRawParameterValue("pt2y");
+    mPt3x      = mValueTree.getRawParameterValue("pt3x");
+    mPt3y      = mValueTree.getRawParameterValue("pt3y");
+    mPt4y        = mValueTree.getRawParameterValue("pt4y");
+    mInGainParam  = mValueTree.getRawParameterValue("inGain");
+    mOutGainParam = mValueTree.getRawParameterValue("outGain");
 }
 
 DestroyerAudioProcessor::~DestroyerAudioProcessor()
@@ -93,8 +135,8 @@ void DestroyerAudioProcessor::changeProgramName (int index, const juce::String& 
 //==============================================================================
 void DestroyerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    for (auto& filter : mMoogFilters)
+        filter.setSampleRate(sampleRate);
 }
 
 void DestroyerAudioProcessor::releaseResources()
@@ -132,25 +174,37 @@ bool DestroyerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 void DestroyerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
+    const auto totalNumInputChannels = getTotalNumInputChannels();
 
-    if (getTotalNumInputChannels() > 2)
+    if (totalNumInputChannels > 2)
         return;
+
+    // Sync curve points from parameters (supports DAW automation)
+    mCurve.mPoints[0].mPosition.y = *mPt0y;
+    mCurve.mPoints[1].mPosition.x = *mPt1x;
+    mCurve.mPoints[1].mPosition.y = *mPt1y;
+    mCurve.mPoints[2].mPosition.x = *mPt2x;
+    mCurve.mPoints[2].mPosition.y = *mPt2y;
+    mCurve.mPoints[3].mPosition.x = *mPt3x;
+    mCurve.mPoints[3].mPosition.y = *mPt3y;
+    mCurve.mPoints[4].mPosition.y = *mPt4y;
+
+    const double freq    = static_cast<double>(*mFreqParam);
+    const double res     = static_cast<double>(*mResParam);
+    const float inGain   = std::pow(10.f, *mInGainParam  / 20.f);
+    const float outGain  = std::pow(10.f, *mOutGainParam / 20.f);
+
+    const int numSamples = buffer.getNumSamples();
     
-    int numSamples = buffer.getNumSamples();
-    
-    if (editor != nullptr)
+    for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
+        auto* channelData = buffer.getWritePointer (channel);
+        
+        for (int i = 0; i < numSamples; ++i)
         {
-            auto* channelData = buffer.getWritePointer (channel);
-            
-            for (int i = 0; i < numSamples; ++i)
-            {
-                float sample = channelData[i];
-                sample = curve.GetYValue(sample);
-                channelData[i] = Filters[channel].Process((double)sample, Freq, Res);
-            }
+            float sample = channelData[i] * inGain;
+            sample = mCurve.GetYValue(sample);
+            channelData[i] = mMoogFilters[channel].Process((double)sample, freq, res) * outGain;
         }
     }
 }
@@ -163,23 +217,24 @@ bool DestroyerAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* DestroyerAudioProcessor::createEditor()
 {
-    editor = new DestroyerAudioProcessorEditor (*this);
-    editor->envelope.curve = &curve;
-    return editor;
+    mEditor = new DestroyerAudioProcessorEditor (*this);
+    mEditor->mEnvelope.mCurve = &mCurve;
+    return mEditor;
 }
 
 //==============================================================================
 void DestroyerAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    const auto state = mValueTree.copyState();
+    std::unique_ptr<juce::XmlElement> xml(state.createXml());
+    copyXmlToBinary(*xml, destData);
 }
 
 void DestroyerAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    std::unique_ptr<juce::XmlElement> xml(getXmlFromBinary(data, sizeInBytes));
+    if (xml != nullptr && xml->hasTagName(mValueTree.state.getType()))
+        mValueTree.replaceState(juce::ValueTree::fromXml(*xml));
 }
 
 //==============================================================================

@@ -13,11 +13,11 @@
 class SineWaveVisual : public juce::Component
 {
 public:
-    SineWaveVisual(int x, int y, int width, int height, Envelope& env) : ownX(x), ownY(y), e(env)
+    SineWaveVisual(int x, int y, int width, int height, Envelope& env) : mOwnX(x), mOwnY(y), mEnvelope(env)
     {
-        xSize = width;
-        ySize = height;
-        setBounds(x, y, xSize, ySize);
+        mXSize = width;
+        mYSize = height;
+        setBounds(x, y, mXSize, mYSize);
         FillSine();
     }
     void FillVisual();
@@ -25,12 +25,12 @@ public:
 private:
     void FillSine();
     void paint(juce::Graphics &g) override;
-    int ownX;
-    int ownY;
-    int xSize;
-    int ySize;
-    std::array<float, 512> points;
-    std::array<float, 512> sine;
-    Envelope& e;
+    int mOwnX;
+    int mOwnY;
+    int mXSize;
+    int mYSize;
+    std::array<float, 512> mPoints;
+    std::array<float, 512> mSine;
+    Envelope& mEnvelope;
 };
 #endif /* SineWaveVisualizer_hpp */

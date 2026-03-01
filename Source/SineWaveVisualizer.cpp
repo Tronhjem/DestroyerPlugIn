@@ -9,56 +9,53 @@
 #include "PluginEditor.h"
 void SineWaveVisual::paint(juce::Graphics &g)
 {
-    FillVisual();
-    // DEBUG DRAW
-//    g.drawRect(0, 0, xSize, ySize);
-    
+    if (mEnvelope.mCurve != nullptr && mEnvelope.mCurve->mDirty)
+    {
+        FillVisual();
+        mEnvelope.mCurve->mDirty = false;
+    }
+
     g.setColour(TURQOISE);
     juce::Path p;
     
-    p.startNewSubPath(0, 100);
+    const float halfHeight = (float)mYSize * 0.5f;
+    p.startNewSubPath(0, halfHeight);
     
-    float halfHeight = (float)ySize * 0.5f;
-    for (int i = 1; i < points.size() - 1; ++i)
+    for (int i = 1; i < (int)mPoints.size() - 1; ++i)
     {
-        // maps since to height. -2 for cleaner visual.
-//        p.lineTo(i, points[i] * (halfHeight-2) + halfHeight);
-        p.quadraticTo(i - 1, points[i - 1] * (halfHeight-2) + halfHeight, i, points[i] * (halfHeight-2) + halfHeight);
+        p.quadraticTo(i - 1, mPoints[i - 1] * (halfHeight-2) + halfHeight, i, mPoints[i] * (halfHeight-2) + halfHeight);
     }
     
-    p.quadraticTo(511, points[511] * (halfHeight - 2) + halfHeight, 512, 100);
+    p.quadraticTo(511, mPoints[511] * (halfHeight - 2) + halfHeight, 512, halfHeight);
     g.strokePath(p, juce::PathStrokeType (2.0f));
     
-    //middle line
-    g.setColour(PINK);
     g.setColour(LIGHT_PURPLE);
-    g.drawLine(0, 100, xSize, 100);
+    g.drawLine(0, halfHeight, mXSize, halfHeight);
 }
 
 void SineWaveVisual::FillSine()
 {
     double t = 0;
-    double delta = 1.0 / (double)(points.size());
-    for (int i = 0; i < points.size() - 1; ++i)
+    const double delta = 1.0 / (double)(mPoints.size());
+    for (int i = 0; i < (int)mPoints.size() - 1; ++i)
     {
-        sine[i] = -1.f * sin(2.0 * 3.1415926536 * t);
+        mSine[i] = -1.f * sin(2.0 * 3.1415926536 * t);
         t += delta;
     }
-    sine[points.size() - 1] = 0.0;
+    mSine[mPoints.size() - 1] = 0.0;
 }
 
 void SineWaveVisual::FillVisual()
 {
-    if (e.curve == nullptr)
+    if (mEnvelope.mCurve == nullptr)
         return;
     
     float last = 0.f;
-    float coef = 0.5f;
+    const float coef = 0.5f;
     
-    for (int i = 0; i < points.size(); ++i)
+    for (int i = 0; i < (int)mPoints.size(); ++i)
     {
-        points[i] = e.curve->GetYValue(sine[i]) * (1.f - coef) + last * coef;
-        last = points[i];
+        mPoints[i] = mEnvelope.mCurve->GetYValue(mSine[i]) * (1.f - coef) + last * coef;
+        last = mPoints[i];
     }
-//    points[points.size() - 1] = 0.f;
 }
